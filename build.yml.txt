@@ -1,0 +1,35 @@
+name: Compilar DOOM PSP
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: pspdev/pspdev:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compilar
+        run: make
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eboot
+          path: EBOOT.PBP
+  iso:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: eboot
+          path: build
+      - name: Crear ISO
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y genisoimage
+          python3 make_iso.py build/EBOOT.PBP out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DOOM-PSP
+          path: |
+            out/DOOM_PSP.iso
+            build/EBOOT.PBP
